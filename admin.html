@@ -2,54 +2,52 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Trại Điều Phối Logistics | Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Bảng Điều Phối Trung Tâm // Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .admin-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .order-panel-card { border:1px solid var(--border-color); padding:20px; border-radius:6px; background:#fff; margin-bottom:15px; }
+        .admin-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; max-width: 1100px; margin: 20px auto; padding: 0 20px; }
     </style>
 </head>
-<body style="background: var(--bg-surface);">
+<body>
 
     <header>
-        <a href="index.html" class="logo">Song <span>Thịnh // Admin Hub</span></a>
-        <a href="index.html" class="action-btn">Quay lại Cửa hàng</a>
+        <a href="index.html" class="logo">Hệ Thống Quản Trị <span>Logistics Hub</span></a>
+        <a href="index.html" class="action-btn"><i class="fas fa-home"></i> Cửa hàng</a>
     </header>
 
-    <div class="admin-container">
-        <h2 style="margin-bottom: 25px; text-transform: uppercase; letter-spacing: -0.5px;">Bảng điều khiển tối cao Logistics</h2>
-        
-        <div class="admin-grid">
-            <div>
-                <h3 style="font-size:14px; margin-bottom:15px; color:var(--text-muted); text-transform:uppercase;">Danh sách lệnh điều động vận tải</h3>
-                <div id="admin-orders-list"></div>
+    <div class="admin-grid">
+        <!-- Khu vực đơn hàng -->
+        <div>
+            <h3 style="font-size:14px; color:var(--ios-text-muted); text-transform:uppercase; margin-bottom:12px; padding-left:5px; font-weight:600;">Lệnh vận tải trực tuyến</h3>
+            <div id="admin-orders-list"></div>
+        </div>
+
+        <!-- Cài đặt giá kho và thông báo nhanh -->
+        <div>
+            <div class="form-card" style="margin-bottom: 24px;">
+                <h3 style="font-size:14px; color:var(--ios-text-muted); text-transform:uppercase; margin-bottom:12px; font-weight:600;">Kho hàng & Giá tập trung</h3>
+                <div id="admin-warehouse-list"></div>
             </div>
 
-            <div>
-                <div class="form-card" style="margin-bottom: 30px;">
-                    <h3 style="font-size:14px; margin-bottom:15px; color:var(--text-muted); text-transform:uppercase;">Biến động giá & Kho hàng tập trung</h3>
-                    <div id="admin-warehouse-list"></div>
+            <div class="form-card">
+                <h3 style="font-size:14px; color:var(--ios-text-muted); text-transform:uppercase; margin-bottom:12px; font-weight:600;">Phát thông báo khẩn</h3>
+                <div class="form-group">
+                    <label>Nội dung hiển thị</label>
+                    <input type="text" id="notice-input" placeholder="Ví dụ: Bão lớn xe cẩu tạm ngưng hạ cát...">
                 </div>
-
-                <div class="form-card">
-                    <h3 style="font-size:14px; margin-bottom:15px; color:var(--text-muted); text-transform:uppercase;">Phát động thông báo thị trường</h3>
-                    <div class="form-group">
-                        <label>Nội dung banner chạy toàn trang chủ</label>
-                        <input type="text" id="notice-input" placeholder="Ví dụ: Giá thép tăng mạnh 10% từ ngày mai...">
-                    </div>
-                    <button onclick="saveNotice()" class="action-btn" style="background:var(--text-main); color:#fff;">Đăng bảng tin</button>
-                    <button onclick="clearNotice()" class="action-btn" style="border-color:red; color:red; margin-left:10px; display:inline-flex;">Xóa bảng tin</button>
+                <div style="display: flex; gap:10px;">
+                    <button onclick="saveNotice()" class="action-btn btn-primary" style="flex:1;">Phát tin</button>
+                    <button onclick="clearNotice()" class="action-btn" style="color:var(--ios-danger); border-color:rgba(255,59,48,0.2);">Gỡ</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Chặn người dùng không phải admin truy cập trái phép
         if(localStorage.getItem('currentUser') !== 'Hệ Thống Admin') {
-            document.body.innerHTML = `<div style="text-align:center; margin-top:100px;"><h2>TRUY CẬP BỊ TỪ CHỐI</h2><p>Tài khoản của bạn không có quyền Quản trị tối cao.</p><br><a href="index.html">Quay lại trang chủ</a></div>`;
+            document.body.innerHTML = `<div style="text-align:center; margin-top:100px; font-family:-apple-system;"><h2>TRUY CẬP KHÔNG HỢP LỆ</h2><p style="color:var(--ios-text-muted);">Tài khoản không đủ thẩm quyền tối cao.</p><br><a href="index.html" class="action-btn">Trở về</a></div>`;
         }
 
         let orders = JSON.parse(localStorage.getItem('orders')) || [];
@@ -60,25 +58,26 @@
             container.innerHTML = '';
 
             if(orders.length === 0) {
-                container.innerHTML = '<p class="order-panel-card">Hệ thống chưa ghi nhận đơn hàng nào.</p>';
+                container.innerHTML = '<div class="form-card" style="color:var(--ios-text-muted); text-align:center;">Chưa ghi nhận lệnh xe nào.</div>';
                 return;
             }
 
             orders.forEach(o => {
-                let statusText = o.status === 'pending' ? 'Chờ duyệt xe' : (o.status === 'confirmed' ? 'Đã duyệt đi giao' : 'Hoàn thành');
+                let statusText = o.status === 'pending' ? 'Chờ xe' : (o.status === 'confirmed' ? 'Đang chở' : 'Đã giao');
                 container.innerHTML += `
                     <div class="order-panel-card">
-                        <div style="display:flex; justify-content:between; margin-bottom:10px;">
-                            <strong>Mã đơn: ${o.id}</strong>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <strong style="font-size:16px;">Lệnh: ${o.id}</strong>
                             <span class="status-badge ${o.status}">${statusText}</span>
                         </div>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Khách hàng: ${o.customer} | Thời gian: ${o.time}</p>
-                        <div style="font-size:13px; background:var(--bg-surface); padding:8px; border-radius:4px; margin-bottom:10px;">
-                            Nơi giao: <strong>${o.shipping.address}</strong> (${o.shipping.name} - ${o.shipping.phone})
+                        <p style="font-size:12px; color:var(--ios-text-muted); margin-bottom:12px;">Khách: ${o.customer} | Giờ đặt: ${o.time}</p>
+                        <div style="font-size:13px; background:var(--ios-bg); padding:10px; border-radius:8px; margin-bottom:12px; border:0.5px solid var(--ios-border);">
+                            <i class="fas fa-map-marker-alt" style="color:var(--ios-text-muted);"></i> bãi: <strong>${o.shipping.address}</strong><br>
+                            <i class="fas fa-phone" style="color:var(--ios-text-muted); font-size:11px;"></i> LH: ${o.shipping.name} - ${o.shipping.phone}
                         </div>
-                        <div style="display:flex; gap:10px;">
-                            ${o.status === 'pending' ? `<button onclick="updateStatus('${o.id}', 'confirmed')" class="action-btn" style="background:var(--accent-green); color:#fff; font-size:11px; padding:4px 8px;">Duyệt Xe Đi Giao</button>` : ''}
-                            ${o.status === 'confirmed' ? `<button onclick="updateStatus('${o.id}', 'completed')" class="action-btn" style="background:#0369a1; color:#fff; font-size:11px; padding:4px 8px;">Xác Nhận Đã Hạ Hàng</button>` : ''}
+                        <div>
+                            ${o.status === 'pending' ? `<button onclick="updateStatus('${o.id}', 'confirmed')" class="action-btn btn-primary" style="font-size:11px; padding:6px 12px; border-radius:12px;">Duyệt lệnh xuất xe</button>` : ''}
+                            ${o.status === 'confirmed' ? `<button onclick="updateStatus('${o.id}', 'completed')" class="action-btn" style="background:var(--ios-success); color:white; border:none; font-size:11px; padding:6px 12px; border-radius:12px;">Đã hạ xong hàng</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -91,12 +90,12 @@
 
             products.forEach(p => {
                 container.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border-color); font-size:13px;">
-                        <span>${p.name}</span>
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            <input type="number" value="${p.price}" onchange="updatePrice('${p.id}', this.value)" style="width:100px; padding:4px; text-align:right;">
-                            <button onclick="toggleStock('${p.id}')" class="action-btn" style="font-size:11px; padding:4px; background:${p.inStock?'#d1fae5':'#fee2e2'}">
-                                ${p.inStock ? 'Còn hàng' : 'Hết hàng'}
+                    <div class="ios-list-item">
+                        <span style="font-weight:500; font-size:13px; max-width:50%;">${p.name}</span>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="number" value="${p.price}" onchange="updatePrice('${p.id}', this.value)" style="width:85px; padding:6px; font-size:12px; border-radius:6px; border:none; background:rgba(0,0,0,0.05); text-align:right;">
+                            <button onclick="toggleStock('${p.id}')" class="action-btn" style="font-size:11px; padding:6px 10px; border-radius:12px; background:${p.inStock?'rgba(52,199,89,0.1)':'rgba(255,59,48,0.1)'}; color:${p.inStock?'var(--ios-success)':'var(--ios-danger)'}; border:none; box-shadow:none;">
+                                ${p.inStock ? 'Còn hàng' : 'Hết'}
                             </button>
                         </div>
                     </div>
@@ -121,11 +120,11 @@
 
         function saveNotice() {
             const val = document.getElementById('notice-input').value.trim();
-            if(val) { localStorage.setItem('sysAnnouncement', val); alert('Đã phát động thông báo!'); }
+            if(val) { localStorage.setItem('sysAnnouncement', val); alert('Đã phát thông báo!'); }
         }
 
         function clearNotice() {
-            localStorage.removeItem('sysAnnouncement'); document.getElementById('notice-input').value = ''; alert('Đã gỡ thông báo!');
+            localStorage.removeItem('sysAnnouncement'); document.getElementById('notice-input').value = ''; alert('Đã gỡ bảng tin thành công!');
         }
 
         document.getElementById('notice-input').value = localStorage.getItem('sysAnnouncement') || '';
