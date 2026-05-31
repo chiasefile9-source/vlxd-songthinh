@@ -24,11 +24,13 @@
         </div>
     </header>
 
-    <div id="global-announcement-zone"></div>
+   <div id="global-announcement-zone"></div>
 
-    <div style="padding: 30px 40px 0; display: flex; justify-content: space-between; align-items: center;">
-        <input type="text" id="search-input" placeholder="Tìm kiếm vật tư kết cấu..." oninput="renderProducts()" style="padding: 10px; width: 300px; border: 1px solid var(--border-color); border-radius: 4px;">
-        <div>
+<div id="global-announcement-zone"></div>
+
+    <div class="filter-zone">
+        <input type="text" id="search-input" placeholder="Tìm kiếm vật tư kết cấu..." oninput="renderProducts()" style="padding: 12px; width: 300px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; background: #fff;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="action-btn" onclick="filterCat('all')">Tất cả</button>
             <button class="action-btn" onclick="filterCat('thep')">Thép</button>
             <button class="action-btn" onclick="filterCat('catda')">Cát & Đá</button>
