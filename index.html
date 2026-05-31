@@ -2,156 +2,47 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>VLXD Song Thịnh // Store</title>
+    <title>Song Thịnh | Logistics</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <header>
-        <a href="index.html" class="logo">Song Thịnh <span>Vật Tư Cốt Lõi</span></a>
+        <a href="index.html" class="logo">Song Thịnh <span>Vật Tư</span></a>
         <div class="header-actions">
-            <button id="user-status-area" class="user-status-btn" onclick="openAuthModal()">
-                <i class="far fa-user-circle"></i> Đăng nhập
-            </button>
-            <a href="admin.html" id="admin-link-btn" class="action-btn" style="display:none; color: var(--ios-danger); border-color: rgba(255,59,48,0.2);">
-                <i class="fas fa-user-shield"></i> Quản trị
-            </a>
-            <a href="checkout.html" class="action-btn btn-primary">
-                <i class="fas fa-shopping-bag"></i> Giỏ hàng (<span id="cart-count">0</span>)
-            </a>
+            <button id="user-status-area" class="user-status-btn" onclick="openAuthModal()"><i class="far fa-user-circle"></i> Đăng nhập</button>
+            <a href="admin.html" id="admin-link-btn" class="action-btn" style="display:none; color:var(--ios-danger);"><i class="fas fa-shield-halved"></i> Admin</a>
+            <a href="checkout.html" class="action-btn btn-primary"><i class="fas fa-cart-shopping"></i> <span id="cart-count">0</span></a>
         </div>
     </header>
 
     <div id="global-announcement-zone"></div>
 
     <div class="filter-zone">
-        <input type="text" id="search-input" class="search-ios" placeholder="Tìm tên thép, vật liệu..." oninput="renderProducts()">
+        <input type="text" id="search-input" class="search-ios" placeholder="Tìm vật tư..." oninput="renderProducts()">
         <div class="segmented-control">
-            <button class="segmented-btn active" id="cat-all" onclick="filterCat('all', this)">Tất cả</button>
-            <button class="segmented-btn" id="cat-thep" onclick="filterCat('thep', this)">Thép</button>
-            <button class="segmented-btn" id="cat-catda" onclick="filterCat('catda', this)">Cát & Đá</button>
+            <button class="segmented-btn active" onclick="filterCat('all', this)">Tất cả</button>
+            <button class="segmented-btn" onclick="filterCat('thep', this)">Thép</button>
+            <button class="segmented-btn" onclick="filterCat('catda', this)">Cát & Đá</button>
         </div>
     </div>
 
-    <h2 class="section-title">Danh mục vật tư</h2>
     <div class="products-grid" id="products-container"></div>
 
-    <!-- Hộp thoại Đăng nhập -->
     <div class="modal-overlay" id="auth-modal" onclick="closeAuthModal()">
         <div class="auth-card" onclick="event.stopPropagation()">
-            <h3 style="margin-bottom: 20px; font-weight: 700;">Hệ Thống Song Thịnh</h3>
+            <h3 style="margin-bottom:20px;">Đăng nhập hệ thống</h3>
             <form onsubmit="handleAuth(event)">
-                <div class="form-group">
-                    <input type="text" id="login-user" placeholder="Tài khoản" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="login-pass" placeholder="Mật khẩu" required>
-                </div>
-                <button type="submit" class="action-btn btn-primary" style="width:100%; padding:10px; margin-top:5px;">Xác nhận</button>
+                <div class="form-group"><input type="text" id="login-user" placeholder="Tài khoản" required></div>
+                <div class="form-group"><input type="password" id="login-pass" placeholder="Mật khẩu" required></div>
+                <button type="submit" class="action-btn btn-primary" style="width:100%">Đăng nhập</button>
             </form>
         </div>
     </div>
 
     <div id="toast-container" class="toast-container"></div>
 
-    <script>
-        const defaultProducts = [
-            { id: 'thep6', name: 'Thép Cuộn Phi 6 Hòa Phát (CB240-T)', price: 17900000, category: 'thep', unit: 'Tấn', inStock: true, img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80' },
-            { id: 'thep12', name: 'Thép Thanh Vằn Phi 12 Việt Úc (CB300-V)', price: 152000, category: 'thep', unit: 'Cây', inStock: true, img: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=500&q=80' },
-            { id: 'catxay', name: 'Cát Vàng Hạt Mịn (Chuyên Xây Tô)', price: 260000, category: 'catda', unit: 'm³', inStock: true, img: 'https://images.unsplash.com/photo-1604147706283-d7119b5b822c?auto=format&fit=crop&w=500&q=80' }
-        ];
-
-        let products = JSON.parse(localStorage.getItem('sysProducts')) || defaultProducts;
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        let currentCat = 'all';
-
-        if(!localStorage.getItem('sysProducts')) localStorage.setItem('sysProducts', JSON.stringify(defaultProducts));
-
-        function renderProducts() {
-            const container = document.getElementById('products-container');
-            const search = document.getElementById('search-input').value.toLowerCase();
-            container.innerHTML = '';
-
-            products.filter(p => (currentCat === 'all' || p.category === currentCat) && p.name.toLowerCase().includes(search))
-            .forEach(p => {
-                container.innerHTML += `
-                    <div class="product-card ${!p.inStock ? 'muted' : ''}">
-                        <div class="img-container">
-                            ${!p.inStock ? '<div class="out-of-stock-badge">TẠM HẾT HÀNG</div>' : ''}
-                            <img src="${p.img}">
-                        </div>
-                        <div class="product-info">
-                            <h4>${p.name}</h4>
-                            <div class="price">${p.price.toLocaleString('vi-VN')}đ <span style="font-size:12px; font-weight:400; color:var(--ios-text-muted);">/ ${p.unit}</span></div>
-                            <button class="action-btn ${p.inStock?'btn-primary':''}" ${!p.inStock ? 'disabled' : ''} onclick="addToCart('${p.id}')" style="width:100%;">
-                                ${p.inStock ? '<i class="fas fa-plus"></i> Thêm vào giỏ' : 'Hết hàng'}
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            updateCartCount();
-        }
-
-        function filterCat(cat, btn) {
-            currentCat = cat;
-            document.querySelectorAll('.segmented-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderProducts();
-        }
-
-        function addToCart(id) {
-            const prod = products.find(p => p.id === id);
-            const exist = cart.find(item => item.productId === id);
-            if(exist) { exist.qty++; } else { cart.push({ productId: id, name: prod.name, price: prod.price, qty: 1 }); }
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartCount();
-            showToast(`Đã thêm ${prod.name}`);
-        }
-
-        function updateCartCount() {
-            document.getElementById('cart-count').innerText = cart.reduce((acc, i) => acc + i.qty, 0);
-        }
-
-        function openAuthModal() { document.getElementById('auth-modal').classList.add('active'); }
-        function closeAuthModal() { document.getElementById('auth-modal').classList.remove('active'); }
-        
-        function handleAuth(e) {
-            e.preventDefault();
-            const user = document.getElementById('login-user').value.trim();
-            const pass = document.getElementById('login-pass').value;
-            
-            if(user === 'admin' && pass === '789songthinh.tp,hcm') {
-                localStorage.setItem('currentUser', 'Hệ Thống Admin');
-                location.reload();
-            } else if(user.length > 2) {
-                localStorage.setItem('currentUser', user);
-                location.reload();
-            }
-        }
-
-        function showToast(text) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast`;
-            toast.innerText = text;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 2200);
-        }
-
-        const user = localStorage.getItem('currentUser');
-        if(user) {
-            document.getElementById('user-status-area').innerHTML = `<i class="fas fa-user"></i> ${user} <span onclick="localStorage.removeItem('currentUser'); location.reload();" style="color:var(--ios-danger); margin-left:6px; font-weight:400; font-size:11px;">[Thoát]</span>`;
-            document.getElementById('user-status-area').onclick = null;
-            if(user === 'Hệ Thống Admin') document.getElementById('admin-link-btn').style.display = 'inline-flex';
-        }
-        
-        const notice = localStorage.getItem('sysAnnouncement');
-        if(notice) document.getElementById('global-announcement-zone').innerHTML = `<div class="announcement-banner"><i class="fas fa-exclamation-triangle"></i> ${notice}</div>`;
-
-        renderProducts();
-    </script>
+    <script src="app.js"></script> <!-- Chuyển logic sang app.js cho gọn -->
 </body>
 </html>
