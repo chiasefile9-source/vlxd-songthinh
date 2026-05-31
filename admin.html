@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Trại Điều Phối Logistics | Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .order-panel-card { border:1px solid var(--border-color); padding:20px; border-radius:6px; background:#fff; margin-bottom:15px; }
+    </style>
+</head>
+<body style="background: var(--bg-surface);">
+
+    <header>
+        <a href="index.html" class="logo">Song <span>Thịnh // Admin Hub</span></a>
+        <a href="index.html" class="action-btn">Quay lại Cửa hàng</a>
+    </header>
+
+    <div class="admin-container">
+        <h2 style="margin-bottom: 25px; text-transform: uppercase; letter-spacing: -0.5px;">Bảng điều khiển tối cao Logistics</h2>
+        
+        <div class="admin-grid">
+            <div>
+                <h3 style="font-size:14px; margin-bottom:15px; color:var(--text-muted); text-transform:uppercase;">Danh sách lệnh điều động vận tải</h3>
+                <div id="admin-orders-list"></div>
+            </div>
+
+            <div>
+                <div class="form-card" style="margin-bottom: 30px;">
+                    <h3 style="font-size:14px; margin-bottom:15px; color:var(--text-muted); text-transform:uppercase;">Biến động giá & Kho hàng tập trung</h3>
+                    <div id="admin-warehouse-list"></div>
+                </div>
+
+                <div class="form-card">
+                    <h3 style="font-size:14px; margin-bottom:15px; color:var(--text-muted); text-transform:uppercase;">Phát động thông báo thị trường</h3>
+                    <div class="form-group">
+                        <label>Nội dung banner chạy toàn trang chủ</label>
+                        <input type="text" id="notice-input" placeholder="Ví dụ: Giá thép tăng mạnh 10% từ ngày mai...">
+                    </div>
+                    <button onclick="saveNotice()" class="action-btn" style="background:var(--text-main); color:#fff;">Đăng bảng tin</button>
+                    <button onclick="clearNotice()" class="action-btn" style="border-color:red; color:red; margin-left:10px; display:inline-flex;">Xóa bảng tin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chặn người dùng không phải admin truy cập trái phép
+        if(localStorage.getItem('currentUser') !== 'Hệ Thống Admin') {
+            document.body.innerHTML = `<div style="text-align:center; margin-top:100px;"><h2>TRUY CẬP BỊ TỪ CHỐI</h2><p>Tài khoản của bạn không có quyền Quản trị tối cao.</p><br><a href="index.html">Quay lại trang chủ</a></div>`;
+        }
+
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+        let products = JSON.parse(localStorage.getItem('sysProducts')) || [];
+
+        function renderAdminOrders() {
+            const container = document.getElementById('admin-orders-list');
+            container.innerHTML = '';
+
+            if(orders.length === 0) {
+                container.innerHTML = '<p class="order-panel-card">Hệ thống chưa ghi nhận đơn hàng nào.</p>';
+                return;
+            }
+
+            orders.forEach(o => {
+                let statusText = o.status === 'pending' ? 'Chờ duyệt xe' : (o.status === 'confirmed' ? 'Đã duyệt đi giao' : 'Hoàn thành');
+                container.innerHTML += `
+                    <div class="order-panel-card">
+                        <div style="display:flex; justify-content:between; margin-bottom:10px;">
+                            <strong>Mã đơn: ${o.id}</strong>
+                            <span class="status-badge ${o.status}">${statusText}</span>
+                        </div>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Khách hàng: ${o.customer} | Thời gian: ${o.time}</p>
+                        <div style="font-size:13px; background:var(--bg-surface); padding:8px; border-radius:4px; margin-bottom:10px;">
+                            Nơi giao: <strong>${o.shipping.address}</strong> (${o.shipping.name} - ${o.shipping.phone})
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            ${o.status === 'pending' ? `<button onclick="updateStatus('${o.id}', 'confirmed')" class="action-btn" style="background:var(--accent-green); color:#fff; font-size:11px; padding:4px 8px;">Duyệt Xe Đi Giao</button>` : ''}
+                            ${o.status === 'confirmed' ? `<button onclick="updateStatus('${o.id}', 'completed')" class="action-btn" style="background:#0369a1; color:#fff; font-size:11px; padding:4px 8px;">Xác Nhận Đã Hạ Hàng</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAdminWarehouse() {
+            const container = document.getElementById('admin-warehouse-list');
+            container.innerHTML = '';
+
+            products.forEach(p => {
+                container.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border-color); font-size:13px;">
+                        <span>${p.name}</span>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <input type="number" value="${p.price}" onchange="updatePrice('${p.id}', this.value)" style="width:100px; padding:4px; text-align:right;">
+                            <button onclick="toggleStock('${p.id}')" class="action-btn" style="font-size:11px; padding:4px; background:${p.inStock?'#d1fae5':'#fee2e2'}">
+                                ${p.inStock ? 'Còn hàng' : 'Hết hàng'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateStatus(id, newStatus) {
+            const o = orders.find(item => item.id === id);
+            if(o) { o.status = newStatus; localStorage.setItem('orders', JSON.stringify(orders)); renderAdminOrders(); }
+        }
+
+        function updatePrice(id, newPrice) {
+            const p = products.find(item => item.id === id);
+            if(p) { p.price = parseInt(newPrice); localStorage.setItem('sysProducts', JSON.stringify(products)); }
+        }
+
+        function toggleStock(id) {
+            const p = products.find(item => item.id === id);
+            if(p) { p.inStock = !p.inStock; localStorage.setItem('sysProducts', JSON.stringify(products)); renderAdminWarehouse(); }
+        }
+
+        function saveNotice() {
+            const val = document.getElementById('notice-input').value.trim();
+            if(val) { localStorage.setItem('sysAnnouncement', val); alert('Đã phát động thông báo!'); }
+        }
+
+        function clearNotice() {
+            localStorage.removeItem('sysAnnouncement'); document.getElementById('notice-input').value = ''; alert('Đã gỡ thông báo!');
+        }
+
+        document.getElementById('notice-input').value = localStorage.getItem('sysAnnouncement') || '';
+        renderAdminOrders();
+        renderAdminWarehouse();
+    </script>
+</body>
+</html>
