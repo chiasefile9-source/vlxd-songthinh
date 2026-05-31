@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>VLXD Song Thịnh | Cửa Hàng Vật Tư</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">Song <span>Thịnh // Store</span></a>
+        <div class="header-actions">
+            <button id="user-status-area" class="user-status-btn" onclick="openAuthModal()">
+                <i class="far fa-user-circle"></i> Đăng nhập / Đăng ký
+            </button>
+            <a href="admin.html" id="admin-link-btn" class="action-btn" style="display:none; color: var(--accent-brick); border-color: var(--accent-brick);">
+                <i class="fas fa-user-shield"></i> Quản trị hệ thống
+            </a>
+            <a href="checkout.html" class="action-btn">
+                <i class="fas fa-shopping-bag"></i> Giỏ hàng [<span id="cart-count">0</span>]
+            </a>
+        </div>
+    </header>
+
+    <div id="global-announcement-zone"></div>
+
+    <div style="padding: 30px 40px 0; display: flex; justify-content: space-between; align-items: center;">
+        <input type="text" id="search-input" placeholder="Tìm kiếm vật tư kết cấu..." oninput="renderProducts()" style="padding: 10px; width: 300px; border: 1px solid var(--border-color); border-radius: 4px;">
+        <div>
+            <button class="action-btn" onclick="filterCat('all')">Tất cả</button>
+            <button class="action-btn" onclick="filterCat('thep')">Thép</button>
+            <button class="action-btn" onclick="filterCat('catda')">Cát & Đá</button>
+        </div>
+    </div>
+
+    <h2 class="section-title">Danh mục vật tư cốt lõi</h2>
+    <div class="products-grid" id="products-container"></div>
+
+    <div class="modal-overlay" id="auth-modal" onclick="closeAuthModal()">
+        <div class="auth-card" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 20px;">ĐĂNG NHẬP HỆ THỐNG</h3>
+            <form onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label>Tài khoản</label>
+                    <input type="text" id="login-user" required>
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="login-pass" required>
+                </div>
+                <button type="submit" class="action-btn" style="width:100%; background:var(--text-main); color:#fff; justify-content:center;">Xác nhận</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        const defaultProducts = [
+            { id: 'thep6', name: 'Thép Cuộn Phi 6 Hòa Phát (CB240-T)', price: 17900000, category: 'thep', unit: 'Tấn', inStock: true, img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80' },
+            { id: 'thep12', name: 'Thép Thanh Vằn Phi 12 Việt Úc (CB300-V)', price: 152000, category: 'thep', unit: 'Cây', inStock: true, img: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=500&q=80' },
+            { id: 'catxay', name: 'Cát Vàng Hạt Mịn (Chuyên Xây Tô)', price: 260000, category: 'catda', unit: 'm³', inStock: true, img: 'https://images.unsplash.com/photo-1604147706283-d7119b5b822c?auto=format&fit=crop&w=500&q=80' }
+        ];
+
+        let products = JSON.parse(localStorage.getItem('sysProducts')) || defaultProducts;
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let currentCat = 'all';
+
+        if(!localStorage.getItem('sysProducts')) localStorage.setItem('sysProducts', JSON.stringify(defaultProducts));
+
+        function renderProducts() {
+            const container = document.getElementById('products-container');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            container.innerHTML = '';
+
+            products.filter(p => (currentCat === 'all' || p.category === currentCat) && p.name.toLowerCase().includes(search))
+            .forEach(p => {
+                container.innerHTML += `
+                    <div class="product-card ${!p.inStock ? 'muted' : ''}">
+                        <div class="img-container">
+                            ${!p.inStock ? '<div class="out-of-stock-badge">HẾT HÀNG</div>' : ''}
+                            <img src="${p.img}">
+                        </div>
+                        <div class="product-info">
+                            <h4>${p.name}</h4>
+                            <div class="price">${p.price.toLocaleString('vi-VN')}đ / ${p.unit}</div>
+                            <button class="action-btn" ${!p.inStock ? 'disabled' : ''} onclick="addToCart('${p.id}')" style="width:100%; justify-content:center;">
+                                ${p.inStock ? 'Thêm vào giỏ' : 'Tạm hết hàng'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            updateCartCount();
+        }
+
+        function filterCat(cat) { currentCat = cat; renderProducts(); }
+
+        function addToCart(id) {
+            const prod = products.find(p => p.id === id);
+            const exist = cart.find(item => item.productId === id);
+            if(exist) { exist.qty++; } else { cart.push({ productId: id, name: prod.name, price: prod.price, qty: 1 }); }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            showToast('success', `Đã thêm ${prod.name} vào giỏ hàng.`);
+        }
+
+        function updateCartCount() {
+            document.getElementById('cart-count').innerText = cart.reduce((acc, i) => acc + i.qty, 0);
+        }
+
+        // Auth
+        function openAuthModal() { document.getElementById('auth-modal').classList.add('active'); }
+        function closeAuthModal() { document.getElementById('auth-modal').classList.remove('active'); }
+        
+        function handleAuth(e) {
+            e.preventDefault();
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            
+            if(user === 'admin' && pass === '789songthinh.tp,hcm') {
+                localStorage.setItem('currentUser', 'Hệ Thống Admin');
+                location.reload();
+            } else if(user.length > 2) {
+                localStorage.setItem('currentUser', user);
+                location.reload();
+            }
+        }
+
+        function showToast(type, text) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = text;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        // Init State
+        const user = localStorage.getItem('currentUser');
+        if(user) {
+            document.getElementById('user-status-area').innerHTML = `Chào, ${user} <span onclick="localStorage.removeItem('currentUser'); location.reload();" style="color:red; cursor:pointer; font-size:11px;">[Thoát]</span>`;
+            document.getElementById('user-status-area').onclick = null;
+            if(user === 'Hệ Thống Admin') document.getElementById('admin-link-btn').style.display = 'inline-flex';
+        }
+        
+        const notice = localStorage.getItem('sysAnnouncement');
+        if(notice) document.getElementById('global-announcement-zone').innerHTML = `<div class="announcement-banner"><i class="fas fa-bullhorn"></i> ${notice}</div>`;
+
+        renderProducts();
+    </script>
+</body>
+</html>
