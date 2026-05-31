@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh Toán | VLXD Song Thịnh</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">Song <span>Thịnh // Checkout</span></a>
+        <a href="index.html" class="action-btn"><i class="fas fa-arrow-left"></i> Tiếp tục mua hàng</a>
+    </header>
+
+    <div class="container-box">
+        <div class="form-card">
+            <h3 style="margin-bottom:20px; text-transform:uppercase;">Thông tin điều phối vận tải</h3>
+            <form onsubmit="handleCheckout(event)">
+                <div class="form-group">
+                    <label>Tên người nhận tại công trình</label>
+                    <input type="text" id="ship-name" required placeholder="Nguyễn Văn A">
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại hạ hàng</label>
+                    <input type="text" id="ship-phone" required pattern="[0-9]{10}" placeholder="0912345678">
+                </div>
+                <div class="form-group">
+                    <label>Vị trí địa điểm công trình nhận vật tư</label>
+                    <input type="text" id="ship-address" required placeholder="Khối 3, Đô Lương, Nghệ An">
+                </div>
+                <button type="submit" class="action-btn" style="width:100%; background:var(--text-main); color:#fff; justify-content:center; padding:12px; margin-top:10px;">
+                    Gửi Lệnh Đặt Hàng
+                </button>
+            </form>
+        </div>
+
+        <div class="form-card" style="background: var(--bg-surface);">
+            <h3 style="margin-bottom:20px; text-transform:uppercase;">Tóm tắt giỏ hàng</h3>
+            <div id="cart-summary-list"></div>
+            <hr style="border:none; border-top:1px dashed var(--border-color); margin:15px 0;">
+            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:16px;">
+                <span>Tổng chi phí dự kiến:</span>
+                <span id="cart-total-price" style="color:var(--accent-brick);">0đ</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+        function renderCartSummary() {
+            const container = document.getElementById('cart-summary-list');
+            let total = 0;
+            container.innerHTML = '';
+
+            if(cart.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px 0;">Giỏ hàng trống rỗng.</p>';
+                return;
+            }
+
+            cart.forEach(item => {
+                total += item.price * item.qty;
+                container.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px;">
+                        <div>
+                            <strong>${item.name}</strong><br>
+                            <span style="color:var(--text-muted); font-size:12px;">Số lượng: x${item.qty}</span>
+                        </div>
+                        <span>(${(item.price * item.qty).toLocaleString('vi-VN')}đ)</span>
+                    </div>
+                `;
+            });
+            document.getElementById('cart-total-price').innerText = total.toLocaleString('vi-VN') + 'đ';
+        }
+
+        function handleCheckout(e) {
+            e.preventDefault();
+            const user = localStorage.getItem('currentUser');
+            if(!user) { alert('Vui lòng đăng nhập tại Trang Chủ trước khi chốt đơn!'); return; }
+            if(cart.length === 0) { alert('Giỏ hàng trống!'); return; }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const newOrder = {
+                id: 'ST-' + Math.floor(1000 + Math.random() * 9000),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                items: [...cart],
+                total: total,
+                customer: user,
+                shipping: {
+                    name: document.getElementById('ship-name').value.trim(),
+                    phone: document.getElementById('ship-phone').value.trim(),
+                    address: document.getElementById('ship-address').value.trim()
+                },
+                status: 'pending'
+            };
+
+            orders.unshift(newOrder);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            localStorage.removeItem('cart');
+            
+            alert(`Đặt hàng thành công! Mã đơn của bạn là: ${newOrder.id}`);
+            window.location.href = 'index.html';
+        }
+
+        renderCartSummary();
+    </script>
+</body>
+</html>
