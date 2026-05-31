@@ -1,39 +1,109 @@
-<div class="container-box">
-    <div class="form-card">
-        <h3>Thông tin giao hàng</h3>
-        <form onsubmit="checkout(event)">
-            <input type="text" id="ship-name" placeholder="Tên người nhận" required style="width:100%; padding:10px; margin-bottom:10px;">
-            <input type="text" id="ship-phone" placeholder="Số điện thoại" required style="width:100%; padding:10px; margin-bottom:10px;">
-            <button type="submit" class="action-btn btn-primary" style="width:100%">Xác nhận đặt hàng</button>
-        </form>
-    </div>
-    <div class="form-card" id="cart-list"></div>
-</div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh Toán // Song Thịnh</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">Thanh Toán <span>Phiên điều phối</span></a>
+        <a href="index.html" class="action-btn"><i class="fas fa-chevron-left"></i> Trở về</a>
+    </header>
 
-<script>
-    function render() {
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        let html = '';
-        cart.forEach((item, index) => {
-            html += `
-            <div class="ios-list-item">
-                <span>${item.name}</span>
-                <div>
-                    <button onclick="changeQty(${index}, -1)">-</button>
-                    <span>${item.qty}</span>
-                    <button onclick="changeQty(${index}, 1)">+</button>
-                    <button onclick="del(${index})" style="color:red">Xóa</button>
+    <div class="container-box">
+        <div class="form-card">
+            <h3 style="margin-bottom:20px; font-weight:700;">Thông tin nhận vật tư</h3>
+            <form onsubmit="handleCheckout(event)">
+                <div class="form-group">
+                    <label>Người nhận tại bãi hạ hàng</label>
+                    <input type="text" id="ship-name" required placeholder="Họ và tên">
                 </div>
-            </div>`;
-        });
-        document.getElementById('cart-list').innerHTML = html;
-    }
-    function changeQty(idx, delta) {
-        let cart = JSON.parse(localStorage.getItem('cart'));
-        cart[idx].qty += delta;
-        if(cart[idx].qty < 1) cart.splice(idx, 1);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        render();
-    }
-    render();
-</script>
+                <div class="form-group">
+                    <label>Số điện thoại liên hệ tài xế</label>
+                    <input type="text" id="ship-phone" required pattern="[0-9]{10}" placeholder="Số điện thoại 10 số">
+                </div>
+                <div class="form-group">
+                    <label>Địa điểm công trình (Vị trí xe cẩu hạ hàng)</label>
+                    <input type="text" id="ship-address" required placeholder="Địa chỉ chi tiết nhận hàng">
+                </div>
+                <button type="submit" class="action-btn btn-primary" style="width:100%; padding:14px; margin-top:10px;">
+                    Đặt Hàng & Xác Nhận Xe Đi Đóng Lệnh
+                </button>
+            </form>
+        </div>
+
+        <div class="form-card" style="background: rgba(255,255,255,0.4); backdrop-filter: var(--blur-effect);">
+            <h3 style="margin-bottom:20px; font-weight:700;">Kiểm tra giỏ hàng</h3>
+            <div id="cart-summary-list"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:16px; margin-top:20px; padding-top:15px; border-top:0.5px solid var(--ios-border);">
+                <span>Tổng chi phí:</span>
+                <span id="cart-total-price" style="color:var(--ios-primary);">0đ</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+        function renderCartSummary() {
+            const container = document.getElementById('cart-summary-list');
+            let total = 0;
+            container.innerHTML = '';
+
+            if(cart.length === 0) {
+                container.innerHTML = '<p style="color:var(--ios-text-muted); text-align:center; padding:20px 0;">Giỏ hàng trống.</p>';
+                return;
+            }
+
+            cart.forEach(item => {
+                total += item.price * item.qty;
+                container.innerHTML += `
+                    <div class="ios-list-item">
+                        <div>
+                            <strong style="font-weight:600;">${item.name}</strong><br>
+                            <span style="color:var(--ios-text-muted); font-size:12px;">Số lượng: x${item.qty}</span>
+                        </div>
+                        <span style="font-weight:600;">${(item.price * item.qty).toLocaleString('vi-VN')}đ</span>
+                    </div>
+                `;
+            });
+            document.getElementById('cart-total-price').innerText = total.toLocaleString('vi-VN') + 'đ';
+        }
+
+        function handleCheckout(e) {
+            e.preventDefault();
+            const user = localStorage.getItem('currentUser');
+            if(!user) { alert('Vui lòng quay lại Trang Chủ để Đăng nhập!'); return; }
+            if(cart.length === 0) { alert('Giỏ hàng của bạn đang trống!'); return; }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const newOrder = {
+                id: 'ST-' + Math.floor(1000 + Math.random() * 9000),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                items: [...cart],
+                total: total,
+                customer: user,
+                shipping: {
+                    name: document.getElementById('ship-name').value.trim(),
+                    phone: document.getElementById('ship-phone').value.trim(),
+                    address: document.getElementById('ship-address').value.trim()
+                },
+                status: 'pending'
+            };
+
+            orders.unshift(newOrder);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            localStorage.removeItem('cart');
+            
+            alert(`Đặt hàng thành công! Lệnh điều phối xe: ${newOrder.id}`);
+            window.location.href = 'index.html';
+        }
+
+        renderCartSummary();
+    </script>
+</body>
+</html>
